@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Replace with your Weather API key and city
 const WEATHER_API_KEY = "79c6ec23f5a04d86bb330353241012"; // Your valid API key
-const CITY = "London"; // Your city of choice
+const CITY = "Manila"; // Your city of choice
 
 router.get("/date-weather", async (req, res) => {
   try {

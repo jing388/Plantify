@@ -1,32 +1,23 @@
 import * as React from "react";
-import {
-  AppBar,
-  Box,
-  Toolbar,
-  Typography,
-  IconButton,
-  Menu,
-  MenuItem,
-} from "@mui/material";
+import { AppBar, Box, Toolbar, Typography, IconButton } from "@mui/material";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import logo from "../assets/plantify-logo.png"; // Import your logo
+import SettingsModal from "./SettingsModal"; // Import your modal component
 
 export default function Header() {
   const [auth, setAuth] = React.useState(true);
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false); // State for modal visibility
 
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleOpenSettingsModal = () => {
+    setIsModalOpen(true); // Open the settings modal
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // Close the modal
   };
 
   return (
     <Box sx={{ flexGrow: 1, mt: 3, mx: 2 }}>
-      {" "}
-      {/* Added mx: 2 for margin on both sides */}
       <AppBar
         position="sticky"
         sx={{
@@ -67,36 +58,17 @@ export default function Header() {
             <IconButton
               size="large"
               aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
+              onClick={handleOpenSettingsModal} // Open modal on click
               color="inherit"
             >
               <AccountCircle sx={{ color: "#2a2a2a" }} />
             </IconButton>
           )}
-
-          {/* Profile Menu */}
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorEl}
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-          >
-            <MenuItem onClick={handleClose}>Profile</MenuItem>
-            <MenuItem onClick={handleClose}>My account</MenuItem>
-          </Menu>
         </Toolbar>
       </AppBar>
+
+      {/* Settings Modal */}
+      <SettingsModal open={isModalOpen} onClose={handleCloseModal} />
     </Box>
   );
 }

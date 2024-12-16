@@ -1,5 +1,6 @@
 import React from "react";
 import { createTheme, ThemeProvider, Box, CssBaseline } from "@mui/material";
+import { min } from "date-fns";
 
 // Create a custom theme
 const theme = createTheme({
@@ -17,9 +18,10 @@ function StatisticsCard({ label, icon, value }) {
           display: "flex",
           flexDirection: "column",
           maxWidth: "20rem", // Limits overall card size
-          minWifth: "20rem", // Ensures card doesn't shrink too much
+          minWidth: "15rem", // Sets minimum card size
           color: "black",
           alignItems: "center",
+          wordWrap: "break-word", // Allows text to wrap
         }}
       >
         <Box
@@ -37,6 +39,7 @@ function StatisticsCard({ label, icon, value }) {
             backgroundColor: "#E9EBDF",
             padding: "16px", // Adjusts inner spacing
             boxSizing: "border-box", // Ensures padding doesn't break sizing
+            wordWrap: "break-word", // Allows text to wrap
           }}
         >
           <img
@@ -68,15 +71,16 @@ function StatisticsCard({ label, icon, value }) {
           <Box
             aria-live="polite"
             style={{
+              fontWeight: "semiBold",
               marginTop: "5px",
-              fontSize: "30px", // Scales responsively
+              fontSize: "20px", // Scales responsively
               textAlign: "center",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               width: "100%",
               letterSpacing: "-0.06em",
-              color: "#2a2a2a",
+              color: "#97A167",
             }}
           >
             {value}
