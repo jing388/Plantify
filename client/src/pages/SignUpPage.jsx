@@ -146,7 +146,13 @@ export default function Header() {
 
         {/* Form Section */}
         <Box
-          sx={{ maxWidth: 400, margin: "0 auto", mt: 1, alignItems: "center" }}
+          sx={{
+            maxWidth: 400,
+            margin: "0 auto",
+            mt: 1,
+            alignItems: "center",
+            mb: 10,
+          }}
         >
           <Stack spacing={2}>
             <Box
