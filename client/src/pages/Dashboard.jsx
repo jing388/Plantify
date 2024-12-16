@@ -22,6 +22,7 @@ import FormControl from "@mui/material/FormControl";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { PlantDialogue } from "../components/PlantDialogue";
 
 const theme = createTheme({
   typography: {
@@ -29,10 +30,12 @@ const theme = createTheme({
   },
   palette: {
     background: {
-      default: "#F0F1EA",
+      default: "#F3F4EC",
     },
   },
 });
+
+const ADEQUATE_SOIL_MOISTURE = 50;
 
 export default function Dashboard() {
   const [lastWatered, setLastWatered] = useState(null);
@@ -59,6 +62,13 @@ export default function Dashboard() {
       const response = await fetch("http://localhost:8080/api/latest-reading");
       const data = await response.json();
       setLatestReading(data); // Update the state with the latest reading
+
+      // Check soil moisture and update plant health
+      if (data.soil_moisture < ADEQUATE_SOIL_MOISTURE) {
+        setIsHealthy(false);
+      } else {
+        setIsHealthy(true);
+      }
     } catch (error) {
       console.error("Error fetching the latest reading:", error);
     }
@@ -246,40 +256,47 @@ export default function Dashboard() {
           </Button>
         </Box>
         {/* Plant Images Section */}
-        <Box
-          sx={{
-            position: "relative",
-            width: "250px",
-            height: "250px",
-            mx: "auto",
-            mt: 5,
-          }}
-        >
-          <Box
-            component="img"
-            src={HealthyPlant}
-            alt="Healthy Plant"
-            sx={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              opacity: isHealthy ? 1 : 0,
-              transition: "opacity 0.5s ease-in-out",
-            }}
+        <Stack direction="column" alignItems="center" justifyContent="center">
+          <PlantDialogue
+            sx={{ mt: -5 }}
+            moisture={latestReading?.soil_moisture || 0}
+            className="absolute -top-16 left-1/2 -translate-x-1/2 z-10 item"
           />
           <Box
-            component="img"
-            src={UnhealthyPlant}
-            alt="Unhealthy Plant"
             sx={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              opacity: isHealthy ? 0 : 1,
-              transition: "opacity 0.5s ease-in-out",
+              position: "relative",
+              width: "250px",
+              height: "250px",
+              mx: "auto",
+              mt: 5,
             }}
-          />
-        </Box>
+          >
+            <Box
+              component="img"
+              src={HealthyPlant}
+              alt="Healthy Plant"
+              sx={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                opacity: isHealthy ? 1 : 0,
+                transition: "opacity 0.5s ease-in-out",
+              }}
+            />
+            <Box
+              component="img"
+              src={UnhealthyPlant}
+              alt="Unhealthy Plant"
+              sx={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                opacity: isHealthy ? 0 : 1,
+                transition: "opacity 0.5s ease-in-out",
+              }}
+            />
+          </Box>
+        </Stack>
         {/* Toggle Button */}
         <Box
           sx={{
