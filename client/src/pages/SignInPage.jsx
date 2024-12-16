@@ -218,7 +218,7 @@ export default function Header() {
 
               {/* OR Divider */}
               <Typography>
-                <Divider sx={{ my: 1 }}>or</Divider>
+                <Divider>or</Divider>
               </Typography>
 
               {/* Sign Up with Google Button */}
