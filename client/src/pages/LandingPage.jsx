@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles"; // Added missing imports
 import logo from "../assets/plantify-logo.png";
@@ -72,6 +71,12 @@ export default function LandingPage() {
     logo: {
       fontSize: "1.5rem",
       fontWeight: "bold",
+    },
+    navbarLogoContainer: {
+      display: "flex",
+      alignItems: "center",
+      gap: "10px", // Space between the text and logo
+      justifyContent: "flex-start", // Align to the left
     },
     heroContent: {
       display: "flex",
@@ -158,22 +163,30 @@ export default function LandingPage() {
         {/* Header Section */}
         <header>
           <nav style={styles.navbar}>
-  <div style={styles.logo}>Plantify.</div>
-  <div style={styles.navLinks}>
-    <Link to="/signin" style={styles.a}>
-      Log in
-    </Link>
-    <Link to="/signup">
-      <button style={styles.btn}>Get Started</button>
-    </Link>
-  </div>
-</nav>
+            <div style={styles.navbarLogoContainer}>
+              <img
+                src={logo}
+                alt="Plantify Logo"
+                style={{ width: "35px", marginRight: "10px" }}
+              />
+              <div style={styles.logo}>Plantify.</div>
+            </div>
+            <div style={styles.navLinks}>
+              <Link to="/signin" style={styles.a}>
+                Log in
+              </Link>
+              <Link to="/signup">
+                <button style={styles.btn}>Get Started</button>
+              </Link>
+            </div>
+          </nav>
 
           <div style={{ padding: "30px 10%", background: "#f7f8f5" }}>
             <div style={styles.heroContent}>
               <div style={styles.heroText}>
                 <h1>
-                  Smart Technology, Healthier Plants—Effortless Care Made Simple.
+                  Smart Technology, Healthier Plants—Effortless Care Made
+                  Simple.
                 </h1>
                 <p>
                   Revolutionizing Plant Care with Smart IoT Solutions. Monitor,
@@ -227,6 +240,41 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* How It Works Section */}
+        <section style={styles.section}>
+          <h2>How it works?</h2>
+          <div style={styles.features}>
+            <div style={styles.card}>
+              <i
+                className="fa fa-laptop"
+                style={{ fontSize: "40px", color: "#22a344" }}
+              ></i>
+              <h3>Monitor Your Plants</h3>
+              <p>Track real-time data via our user-friendly dashboard.</p>
+            </div>
+            <div style={styles.card}>
+              <i
+                className="fa fa-bolt"
+                style={{ fontSize: "40px", color: "#22a344" }}
+              ></i>
+              <h3>Customized Care</h3>
+              <p>
+                Let Plantify adjust your care routines based on your preference.
+              </p>
+            </div>
+            <div style={styles.card}>
+              <i
+                className="fa fa-rss"
+                style={{ fontSize: "40px", color: "#22a344" }}
+              ></i>
+              <h3>Stay Connected</h3>
+              <p>
+                Receive instant notifications and updates right to your device.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section style={styles.cta}>
           <img src={logo} alt="Plantify Logo" style={styles.ctaLogo} />
@@ -236,8 +284,8 @@ export default function LandingPage() {
             monitoring and tailored recommendations.
           </p>
           <Link to="/signup">
-  <button style={styles.btn}>Try it now!</button>
-</Link>
+            <button style={styles.btn}>Try it now!</button>
+          </Link>
         </section>
 
         {/* FAQ Section */}

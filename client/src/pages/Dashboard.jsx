@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import Firebase auth
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Header from "../components/Header";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -12,7 +12,6 @@ import StatisticsCard from "../components/StatisticsCard";
 import Temperature from "../assets/temperature.png";
 import SoilMoisture from "../assets/soil-moisture.png";
 import LastWatered from "../assets/last-watered.png";
-import SettingsModal from "../components/SettingsModal";
 import { CSSTransition } from "react-transition-group";
 import WaterDropSharpIcon from "@mui/icons-material/WaterDropSharp";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +23,9 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { PlantDialogue } from "../components/PlantDialogue";
+import SoilMoistureGuideModal from "../components/SoilMoistureGuide";
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const theme = createTheme({
   typography: {
@@ -44,21 +46,21 @@ export default function Dashboard() {
   const [isHealthy, setIsHealthy] = useState(true);
   const [date, setDate] = useState("");
   const [weather, setWeather] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWatering, setIsWatering] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isFirstAlert, setIsFirstAlert] = useState(true);
   const [isAutoWatering, setIsAutoWatering] = useState(false);
-  const [user, setUser] = useState(null); // State to store user info
+  const [user, setUser] = useState(null);
+  const [isSoilMoistureGuideOpen, setIsSoilMoistureGuideOpen] = useState(false);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
-    setIsFirstAlert(false); // After the first alert, subsequent ones will auto-hide
+    setIsFirstAlert(false);
   };
 
-  // Monitor authentication state
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -66,21 +68,19 @@ export default function Dashboard() {
         setUser(user);
       } else {
         setUser(null);
-        window.location.href = "/signin"; // Navigate to signin page if user is null
+        window.location.href = "/signin";
       }
     });
 
-    return () => unsubscribe(); // Cleanup on unmount
+    return () => unsubscribe();
   }, []);
 
-  // Fetch the latest readings from the server
   const fetchLatestReading = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/latest-reading");
+      const response = await fetch("${API_BASE_URL}/api/latest-reading");
       const data = await response.json();
-      setLatestReading(data); // Update the state with the latest reading
+      setLatestReading(data);
 
-      // Check soil moisture and update plant health
       if (data.soil_moisture < ADEQUATE_SOIL_MOISTURE) {
         setIsHealthy(false);
       } else {
@@ -93,31 +93,28 @@ export default function Dashboard() {
 
   const fetchLastWatered = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/last-watered");
+      const response = await fetch("${API_BASE_URL}/api/last-watered");
       const data = await response.json();
-      setLastWatered(data.timestamp); // Update the state with the last watered timestamp
+      setLastWatered(data.timestamp);
     } catch (error) {
       console.error("Error fetching last watered timestamp:", error);
     }
   };
 
-  // Set up the interval to fetch the latest reading every 10 seconds (10000ms)
   useEffect(() => {
-    fetchLatestReading(); // Initial fetch
-    const intervalId = setInterval(fetchLatestReading, 10000); // Fetch every 10 seconds
+    fetchLatestReading();
+    const intervalId = setInterval(fetchLatestReading, 10000);
 
-    // Cleanup the interval when the component unmounts
     return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
-    fetchLastWatered(); // Initial fetch
-    const intervalId = setInterval(fetchLastWatered, 10000); // Fetch every 10 seconds
+    fetchLastWatered();
+    const intervalId = setInterval(fetchLastWatered, 10000);
 
-    return () => clearInterval(intervalId); // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
-  // Format the timestamp to show relative time like "Just Now", "1 hour ago", etc.
   const formatTimestamp = (timestamp) => {
     const now = new Date();
     const readingTime = new Date(timestamp);
@@ -127,8 +124,7 @@ export default function Dashboard() {
 
   const handleWateringToggle = async () => {
     try {
-      // Send a request to the backend to update the command in the database
-      const response = await fetch("http://localhost:8080/api/update-command", {
+      const response = await fetch("${API_BASE_URL}/api/update-command", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +133,6 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        // If successful, toggle the watering state and show snackbar message
         setIsWatering(!isWatering);
         setSnackbarMessage(
           isWatering ? "Watering complete!" : "Watering now..."
@@ -154,7 +149,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDateAndWeather = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/date-weather");
+        const response = await fetch("${API_BASE_URL}/api/date-weather");
         const data = await response.json();
         setDate(data.date);
         setWeather(data.weather);
@@ -168,7 +163,7 @@ export default function Dashboard() {
 
   const handleAutoWateringToggle = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/auto-watering", {
+      const response = await fetch("${API_BASE_URL}/api/auto-watering", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -192,15 +187,14 @@ export default function Dashboard() {
     }
   };
 
-  // Lock scroll when the modal is open
   useEffect(() => {
     if (isModalOpen) {
-      document.body.style.overflow = "hidden"; // Disable scrolling
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "auto"; // Enable scrolling
+      document.body.style.overflow = "auto";
     }
     return () => {
-      document.body.style.overflow = "auto"; // Cleanup on unmount
+      document.body.style.overflow = "auto";
     };
   }, [isModalOpen]);
 
@@ -208,12 +202,12 @@ export default function Dashboard() {
     setIsHealthy(!isHealthy);
   };
 
-  const handleOpenSettingsModal = () => {
-    setIsModalOpen(true); // Open modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false); // Close modal
+  const handleSoilMoistureGuideToggle = () => {
+    setIsSoilMoistureGuideOpen(!isSoilMoistureGuideOpen);
   };
 
   return (
@@ -221,7 +215,6 @@ export default function Dashboard() {
       <CssBaseline />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <Header />
-        {/* Date and Weather Section */}
         <Box
           sx={{
             display: "flex",
@@ -256,6 +249,7 @@ export default function Dashboard() {
 
           <Button
             variant="outlined"
+            onClick={handleSoilMoistureGuideToggle}
             sx={{
               textTransform: "none",
               borderRadius: "10px",
@@ -268,11 +262,12 @@ export default function Dashboard() {
               gap: "8px",
             }}
           >
-            See Plant Care History
-            <WaterDropSharpIcon sx={{ width: "0.5em", height: "auto" }} />
+            Soil Moisture Guide
+            <WaterDropSharpIcon
+              sx={{ width: "0.9em", height: "auto", fontSize: "small" }}
+            />
           </Button>
         </Box>
-        {/* Plant Images Section */}
         <Stack direction="column" alignItems="center" justifyContent="center">
           <PlantDialogue
             sx={{ mt: -5 }}
@@ -314,7 +309,6 @@ export default function Dashboard() {
             />
           </Box>
         </Stack>
-        {/* Toggle Button */}
         <Box
           sx={{
             display: "flex",
@@ -329,10 +323,9 @@ export default function Dashboard() {
             alignItems={"center"}
             justifyContent={"center"}
           >
-            {/* Snackbar Button */}
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
-                variant="contained" // Change to "contained" to avoid the default border
+                variant="contained"
                 onClick={handleWateringToggle}
                 sx={{
                   textTransform: "none",
@@ -341,19 +334,17 @@ export default function Dashboard() {
                   color: "white",
                   fontWeight: "semibold",
                   padding: "10px 20px",
-                  boxShadow: "none", // Remove shadow
-                  border: "none", // Remove border
-                  outline: "none", // Remove focus outline
+                  boxShadow: "none",
+                  border: "none",
+                  outline: "none",
                   "&:hover": {
                     backgroundColor: isWatering ? "#E64A19" : "#3E9109",
-                    boxShadow: "none", // Remove shadow on hover
+                    boxShadow: "none",
                   },
                   "&:focus": {
-                    outline: "none", // Remove focus outline
+                    outline: "none",
                   },
-                  "&:active": {
-                    // Remove shadow on active
-                  },
+                  "&:active": {},
                 }}
               >
                 {isWatering ? "Click to stop watering" : "Water now!"}
@@ -376,14 +367,14 @@ export default function Dashboard() {
                         onChange={handleAutoWateringToggle}
                         sx={{
                           "& .MuiSwitch-switchBase.Mui-checked": {
-                            color: "#4CAF50", // Color when checked
+                            color: "#4CAF50",
                             "&:hover": {
-                              backgroundColor: "rgba(76, 175, 80, 0.08)", // Background color when checked and hovered
+                              backgroundColor: "rgba(76, 175, 80, 0.08)",
                             },
                           },
                           "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
                             {
-                              backgroundColor: "#4CAF50", // Track color when checked
+                              backgroundColor: "#4CAF50",
                             },
                         }}
                       />
@@ -405,7 +396,7 @@ export default function Dashboard() {
           </Stack>
           <Snackbar
             open={snackbarOpen}
-            autoHideDuration={isFirstAlert ? null : 5000} // No auto-hide for the first alert
+            autoHideDuration={isFirstAlert ? null : 5000}
             onClose={handleSnackbarClose}
             anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           >
@@ -436,7 +427,6 @@ export default function Dashboard() {
             </Alert>
           </CSSTransition>
         </Box>
-        {/* Statistics Section */}
         <Box sx={{ display: "flex", justifyContent: "center", gap: 4, mt: 8 }}>
           <StatisticsCard
             label="Temperature"
@@ -444,7 +434,7 @@ export default function Dashboard() {
             value={
               latestReading ? `${latestReading.temperature} °C` : "Loading..."
             }
-            valueStyle={{ fontSize: "24px", color: "#FF5722" }} // Custom value style
+            valueStyle={{ fontSize: "24px", color: "#FF5722" }}
           />
           <StatisticsCard
             label="Soil Moisture"
@@ -452,13 +442,13 @@ export default function Dashboard() {
             value={
               latestReading ? `${latestReading.soil_moisture}%` : "Loading..."
             }
-            valueStyle={{ fontSize: "24px", color: "#4CAF50" }} // Custom value style
+            valueStyle={{ fontSize: "24px", color: "#4CAF50" }}
           />
           <StatisticsCard
             label="Last Watered"
             icon={LastWatered}
             value={lastWatered ? formatTimestamp(lastWatered) : "Loading..."}
-            valueStyle={{ fontSize: "20px", color: "#2196F3" }} // Custom value style
+            valueStyle={{ fontSize: "20px", color: "#2196F3" }}
           />
         </Box>
 
@@ -479,9 +469,11 @@ export default function Dashboard() {
             },
           }}
         />
+        <SoilMoistureGuideModal
+          open={isSoilMoistureGuideOpen}
+          onClose={() => setIsSoilMoistureGuideOpen(false)}
+        />
       </Box>
-      {/* Settings Modal */}
-      <SettingsModal open={isModalOpen} onClose={handleCloseModal} />
     </ThemeProvider>
   );
 }

@@ -5,7 +5,7 @@ const weatherRoutes = require("./routes/weather");
 
 const app = express();
 const corsOptions = {
-  origin: ["http://localhost:5173"], // Frontend URL
+  origin: ["ttps://darkgreen-pelican-362860.hostingersite.com"], // Frontend URL
 };
 
 app.use(cors(corsOptions));
@@ -101,4 +101,14 @@ app.use("/api", weatherRoutes);
 
 app.listen(8080, () => {
   console.log("Server is running on port 8080");
+});
+
+const path = require("path");
+
+// Serve static files from the React dist folder
+app.use(express.static(path.join(__dirname, "client/dist")));
+
+// Catch-all route to serve the React frontend
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/dist", "index.html"));
 });
