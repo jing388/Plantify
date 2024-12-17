@@ -56,6 +56,7 @@ export default function Header() {
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
+  const [googleError, setGoogleError] = React.useState("");
 
   const [errors, setErrors] = React.useState({
     email: "",
@@ -107,6 +108,13 @@ export default function Header() {
   // Google Sign-Up Handler
   const handleGoogleSignUp = async () => {
     const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    setGoogleError(""); // Clear previous Google error message
+
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
@@ -123,13 +131,19 @@ export default function Header() {
       navigate("/dashboard"); // Redirect to dashboard
     } catch (error) {
       console.error("Google Sign-In Error:", error.message);
-      setErrorMessage("Email already in use. Please try another account.");
+      // Set specific error messages based on error codes
+      if (error.code === "auth/email-already-in-use") {
+        setGoogleError("Email already in use. Please try another account.");
+      } else {
+        setGoogleError("An error occurred during Google sign-in. Please try again.");
+      }
     }
   };
 
   // Manual Sign-Up Handler
   const handleManualSignUp = async (e) => {
     e.preventDefault();
+    setErrorMessage(""); // Clear previous error message
     if (!validate()) return;
 
     try {
@@ -155,7 +169,22 @@ export default function Header() {
       navigate("/verify-email"); // Redirect to verification page
     } catch (error) {
       console.error("Manual Sign-Up Error:", error.message);
-      setErrorMessage("Account creation failed. Email may already be in use.");
+      
+      // Set specific error messages based on error codes
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          setErrorMessage("The email address is already in use by another account.");
+          break;
+        case "auth/invalid-email":
+          setErrorMessage("The email address is not valid.");
+          break;
+        case "auth/weak-password":
+          setErrorMessage("The password is too weak. It should be at least 6 characters.");
+          break;
+        default:
+          setErrorMessage("An error occurred during sign-up. Please try again.");
+          break;
+      }
     }
   };
 
@@ -190,86 +219,90 @@ export default function Header() {
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ maxWidth: 400, margin: "0 auto", mt: 2 }}>
-          <Stack spacing={2}>
-            {errorMessage && (
-              <Alert
-                severity="error"
-                sx={{ position: "absolute", bottom: 0, width: "100%" }}
-              >
-                {errorMessage}
-              </Alert>
-            )}
-            <Box sx={{ textAlign: "center" }}>
-              <img
-                src={plant}
-                alt="plant"
-                style={{ height: 30, marginBottom: 10 }}
-              />
-              <Typography variant="h4" sx={{ fontWeight: "medium" }}>
-                Create Account
-              </Typography>
-            </Box>
-            <form onSubmit={handleManualSignUp}>
-              <Stack spacing={2}>
-                <TextField
-                  label="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  error={!!errors.email}
-                  helperText={errors.email}
-                  fullWidth
-                />
-                <TextField
-                  label="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  error={!!errors.username}
-                  helperText={errors.username}
-                  fullWidth
-                />
-                <TextField
-                  label="Password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  error={!!errors.password}
-                  helperText={errors.password}
-                  fullWidth
-                />
-                <TextField
-                  label="Confirm Password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  error={!!errors.confirmPassword}
-                  helperText={errors.confirmPassword}
-                  fullWidth
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{ backgroundColor: "#4db30b" }}
-                >
-                  Sign Up
-                </Button>
-              </Stack>
-            </form>
-            <Divider>or</Divider>
-            <Button
-              onClick={handleGoogleSignUp}
-              variant="outlined"
-              sx={{ color: "#4db30b" }}
-            >
-              <img
-                src={googleLogo}
-                alt="Google"
-                style={{ height: 20, marginRight: 10 }}
-              />
-              Sign Up with Google
-            </Button>
-          </Stack>
-        </Box>
+        <Box sx={{ maxWidth: 400, margin: "0 auto", mt: 2, position: "relative" }}>
+  <Stack spacing={2}>
+    {/* Displaying Google sign-in errors */}
+    {googleError && (
+      <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
+        {googleError}
+      </Alert>
+    )}
+    {/* Displaying manual sign-up errors */}
+    {errorMessage && (
+      <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
+        {errorMessage}
+      </Alert>
+    )}
+    <Box sx={{ textAlign: "center" }}>
+      <img
+        src={plant}
+        alt="plant"
+        style={{ height: 30, marginBottom: 10 }}
+      />
+      <Typography variant="h4" sx={{ fontWeight: "medium" }}>
+        Create Account
+      </Typography>
+    </Box>
+    <form onSubmit={handleManualSignUp}>
+      <Stack spacing={2}>
+        <TextField
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={!!errors.email}
+          helperText={errors.email}
+          fullWidth
+        />
+        <TextField
+          label="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          error={!!errors.username}
+          helperText={errors.username}
+          fullWidth
+        />
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={!!errors.password}
+          helperText={errors.password}
+          fullWidth
+        />
+        <TextField
+          label="Confirm Password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword}
+          fullWidth
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          sx={{ backgroundColor: "#4db30b" }}
+        >
+          Sign Up
+        </Button>
+      </Stack>
+    </form>
+    <Divider>or</Divider>
+    <Button
+      onClick={handleGoogleSignUp}
+      variant="outlined"
+      sx={{ color: "#4db30b" }}
+    >
+      <img
+        src={googleLogo}
+        alt="Google"
+        style={{ height: 20, marginRight: 10 }}
+      />
+      Sign Up with Google
+    </Button>
+  </Stack>
+</Box>
       </Box>
     </ThemeProvider>
   );
