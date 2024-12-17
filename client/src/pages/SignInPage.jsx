@@ -1,197 +1,230 @@
-import React, { useState } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
+import * as React from "react";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+  Button,
+  TextField,
+  Stack,
+  Divider,
+} from "@mui/material";
+import { Link, useNavigate } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import logo from "../assets/plantify-logo.png";
+import plant from "../assets/plant-midgit.png";
+import googleLogo from "../assets/google.png";
+import { signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "../firebase"; // Ensure that auth is imported correctly
+import { doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions as needed
+import { db } from "../firebase"; // Ensure that you have imported your Firestore database reference
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAgm48NDdkmQg1G8JUgMgs0EyvBDgxT79o",
-  authDomain: "plantify-3b3a9.firebaseapp.com",
-  projectId: "plantify-3b3a9",
-  storageBucket: "plantify-3b3a9.firebasestorage.app",
-  messagingSenderId: "267170335326",
-  appId: "1:267170335326:web:d80e2649e4f88703f102cf",
-};
+export default function SignInPage() {
+  const theme = createTheme({
+    typography: {
+      fontFamily: "Inter, sans-serif",
+    },
+    palette: {
+      background: {
+        default: "#F3F4EC",
+      },
+    },
+  });
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+  // State for form fields and errors
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [errors, setErrors] = React.useState({ email: "", password: "" });
+  const [googleError, setGoogleError] = React.useState(""); // Added state for Google error messages
+  const navigate = useNavigate(); // Use useNavigate hook for navigation
 
-function SignIn() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  // Validation function
+  const validate = () => {
+    let valid = true;
+    let newErrors = { email: "", password: "" };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-      navigate('/dashboard'); // Redirect to dashboard after successful login
-    } catch (err) {
-      setError(err.message);
+    if (!email) {
+      newErrors.email = "Email is required";
+      valid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email is invalid";
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (validate()) {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        console.log("Sign-in successful, user: ", user);
+        navigate("/dashboard"); // Redirect user to dashboard or another page
+      } catch (error) {
+        console.error("Error during sign-in: ", error);
+        setErrors({ ...errors, password: "Invalid email or password" });
+      }
     }
   };
 
-  const handleEmailSignIn = async (e) => {
-    e.preventDefault();
+  // Handle Google sign-in
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    setGoogleError(""); // Clear previous Google error message
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.message);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user exists in Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      // If user does not exist, save them to Firestore
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          username: user.displayName || "Google User",
+          email: user.email,
+          isVerified: user.emailVerified,
+          createdAt: new Date(),
+        });
+      }
+
+      navigate("/dashboard"); // Redirect to dashboard
+    } catch (error) {
+      console.error("Error during Google sign-in: ", error);
+      setGoogleError("Failed to sign in with Google. Please try again."); // Display error message
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Sign in</h1>
-        <p style={styles.subtitle}>Welcome back! Please sign in to your account.</p>
-        <button style={styles.googleButton} onClick={handleGoogleSignIn}>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google logo" style={styles.googleIcon} />
-          Continue with Google
-        </button>
-        <div style={styles.separator}>OR</div>
-        <form onSubmit={handleEmailSignIn} style={styles.form}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-          />
-          <div style={styles.footer}>
-            <a href="/forgot-password" style={styles.link}>Forgot Password?</a>
-          </div>
-          <div style={{ position: 'relative', height: '100px', width: '100%' }}>
-    <form>
-        <button 
-            type="submit" 
-            style={styles.signInButton}>
-            Sign in
-        </button>
-    </form>
-</div>
+    <ThemeProvider theme={theme}>
+      <Box sx={{ flexGrow: 1, mt: 3, mx: 2 }}>
+        <AppBar
+          position="sticky"
+          sx={{
+            backgroundColor: "transparent",
+            boxShadow: "none",
+          }}
+        >
+          <Toolbar sx={{ display: "flex", justifyContent: "space-between", padding: "0 20px" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Link to="/">
+                <img src={logo} alt="Plantify Logo" style={{ height: 30, marginRight: 10 }} />
+              </Link>
+              <Typography variant="h6" component="div" sx={{ color: "#2a2a2a", fontWeight: "bold", letterSpacing: "-0.06em" }}>
+                Plantify.
+              </Typography>
+            </Box>
+            <Link to="/signup" style={{ fontWeight: "bold" }}>
+              <Button variant="text" sx={{ color: "#2a2a2a", textTransform: "none" }}>
+                Sign Up
+              </Button>
+            </Link>
+          </Toolbar>
+        </AppBar>
 
-
-        </form>
-        {error && <p style={styles.error}>{error}</p>}
-        <p style={styles.signupText}>
-          Don't have an account? <a href="/signup" style={styles.link}>Sign up</a>
-        </p>
-      </div>
-    </div>
+        <Box sx={{ maxWidth: 400, margin: "0 auto", mt: 1, alignItems: "center" }}>
+          <Stack spacing={2}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src={plant} alt="plant" style={{ height: 30, marginRight: 10 }} />
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: "medium", mb: 4, alignItems: "center", letterSpacing: "-0.06em" }}>
+                Sign in
+              </Typography>
+            </Box>
+          </Stack>
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={2}>
+              <TextField
+                label="Email"
+                variant="outlined"
+                fullWidth
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={!!errors.email}
+                helperText={errors.email}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                variant="outlined"
+                fullWidth
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!errors.password}
+                helperText={errors.password}
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  backgroundColor: "#4db30b",
+                  borderRadius: "5px",
+                  color: "white",
+                  textTransform: "none",
+                  mt: 2,
+                  height: 50,
+                }}
+              >
+                Sign In
+              </Button>
+              {googleError && (
+                <Typography color="error" variant="body2">
+                  {googleError}
+                </Typography>
+              )}
+              <Typography>
+                <Divider>or</Divider>
+              </Typography>
+              <Button
+                variant="outlined"
+                sx={{
+                  borderColor: "#4db30b",
+                  borderRadius: "5px",
+                  color: "#4db30b",
+                  textTransform: "none",
+                  height: 50,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                onClick={handleGoogleSignIn}
+              >
+                <img src={googleLogo} alt="Google Logo" style={{ height: 20, marginRight: 10 }} />
+                Sign In with Google
+              </Button>
+              <Button
+                variant="text"
+                sx={{
+                  color: "#4db30b",
+                  textTransform: "none",
+                  mt: 1,
+                  fontSize: "0.9rem",
+                }}
+                component={Link}
+                to="/forgot-password"
+              >
+                Forgot Password?
+              </Button>
+            </Stack>
+          </form>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: '#f4f4f9',
-    fontFamily: 'Inter, sans-serif',
-  },
-  card: {
-    width: '400px',
-    padding: '2rem',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-    borderRadius: '8px',
-    backgroundColor: '#fff',
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: '1.8rem',
-    fontWeight: '600',
-    marginBottom: '0.5rem',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: '1rem',
-    marginBottom: '1.5rem',
-    color: '#555',
-  },
-  googleButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    padding: '0.8rem',
-    backgroundColor: '#fff',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginBottom: '1.5rem',
-    fontSize: '1rem',
-    color: '#555',
-  },
-  googleIcon: {
-    width: '20px',
-    marginRight: '10px',
-  },
-  separator: {
-    margin: '1rem 0',
-    color: '#aaa',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  input: {
-    padding: '0.75rem',
-    marginBottom: '1rem',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    fontSize: '1rem',
-    color: '#333',
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    fontSize: '0.9rem',
-    color: '#555',
-    marginBottom: '1rem',
-  },
-  link: {
-    color: '#007BFF',
-    textDecoration: 'none',
-    fontWeight: '500',
-  },
-  signInButton: {
-    padding: '15px',
-    backgroundColor: '#4DB30B', // Updated background color
-    color: '#fff',
-    border: 'none',
-    borderRadius: '50px', // Updated border radius
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: '600',
-    display: 'inline-flex', // Added display for layout
-    justifyContent: 'center', // Added justify content for alignment
-    alignItems: 'center', // Added align items for vertical alignment
-    gap: '10px', // Added gap for spacing between elements
-  },
-  error: {
-    marginTop: '1rem',
-    color: 'red',
-    fontSize: '0.9rem',
-  },
-  signupText: {
-    marginTop: '1.5rem',
-    fontSize: '0.9rem',
-    color: '#555',
-  },
-};
-
-export default SignIn; 
