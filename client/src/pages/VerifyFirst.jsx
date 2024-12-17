@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AppBar, Box, Toolbar, Typography, Stack, Button } from "@mui/material";
+import { AppBar, Box, Toolbar, Typography, Stack } from "@mui/material";
 import { Link } from "react-router-dom"; // Import Link from react-router-dom
 import { createTheme, ThemeProvider } from "@mui/material/styles"; // Import necessary theme functions
 import logo from "../assets/plantify-logo.png"; // Import your logo
@@ -88,7 +88,7 @@ export default function EmailVerification() {
               letterSpacing: "-0.06em",
             }}
           >
-            Verify your email!
+            Verify your email first!
           </Typography>
 
           {/* Body Text */}
@@ -106,15 +106,9 @@ export default function EmailVerification() {
             <Button
               type="submit"
               variant="contained"
-              sx={{
-                backgroundColor: "#4db30b",
-                boxShadow: "none",
-                textTransform: "none",
-                borderRadius: "10px",
-                ":hover": { backgroundColor: "#3C8B09", boxShadow: "none" },
-              }}
+              sx={{ backgroundColor: "#4db30b" }}
             >
-              Proceed to Login
+              Back to Login
             </Button>
           </Link>
         </Box>

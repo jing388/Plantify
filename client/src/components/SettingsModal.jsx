@@ -5,6 +5,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Button, Typography } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import CloseIcon from "@mui/icons-material/Close";
+import { getAuth, signOut } from "firebase/auth";
 
 const theme = createTheme({
   typography: {
@@ -17,6 +18,17 @@ const theme = createTheme({
     },
   },
 });
+
+const handleSignOut = () => {
+  const auth = getAuth();
+  signOut(auth)
+    .then(() => {
+      console.log("Sign-out successful.");
+    })
+    .catch((error) => {
+      console.error("Sign-out error:", error);
+    });
+};
 
 const SettingsModal = ({ open, onClose }) => {
   return (
@@ -50,7 +62,7 @@ const SettingsModal = ({ open, onClose }) => {
             <Typography>Name</Typography>
             <Typography>Email</Typography>
             <Typography>Password</Typography>
-            <Typography>Logout</Typography>
+            <Typography onClick={handleSignOut}>Logout</Typography>
           </Stack>
         </Box>
       </Modal>

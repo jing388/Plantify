@@ -9,46 +9,42 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
-import { createTheme, ThemeProvider } from "@mui/material/styles"; // Import necessary theme functions
-import logo from "../assets/plantify-logo.png"; // Import your logo
-import plant from "../assets/plant-midgit.png"; // Import your plant image
-import googleLogo from "../assets/google.png"; // Import Google logo
+import { Link, useNavigate } from "react-router-dom";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import logo from "../assets/plantify-logo.png";
+import plant from "../assets/plant-midgit.png";
+import googleLogo from "../assets/google.png";
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+} from "firebase/auth";
+import { auth, db } from "../../firebase"; // Ensure that auth is imported correctly
+import { doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions as needed
 
-export default function Header() {
+export default function SignInPage() {
   const theme = createTheme({
     typography: {
-      fontFamily: "Inter, sans-serif", // Apply the font family
+      fontFamily: "Inter, sans-serif",
     },
     palette: {
       background: {
-        default: "#F3F4EC", // Set the default background color
+        default: "#F3F4EC",
       },
     },
   });
 
   // State for form fields and errors
   const [email, setEmail] = React.useState("");
-  const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-
-  const [errors, setErrors] = React.useState({
-    email: "",
-    username: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [errors, setErrors] = React.useState({ email: "", password: "" });
+  const [googleError, setGoogleError] = React.useState(""); // Added state for Google error messages
+  const navigate = useNavigate(); // Use useNavigate hook for navigation
 
   // Validation function
   const validate = () => {
     let valid = true;
-    let newErrors = {
-      email: "",
-      username: "",
-      password: "",
-      confirmPassword: "",
-    };
+    let newErrors = { email: "", password: "" };
 
     if (!email) {
       newErrors.email = "Email is required";
@@ -58,21 +54,8 @@ export default function Header() {
       valid = false;
     }
 
-    if (!username) {
-      newErrors.username = "Username is required";
-      valid = false;
-    }
-
     if (!password) {
       newErrors.password = "Password is required";
-      valid = false;
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-      valid = false;
-    }
-
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
       valid = false;
     }
 
@@ -81,33 +64,81 @@ export default function Header() {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
-      // Submit the form if validation passes
-      console.log("Form submitted");
+      try {
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        const user = userCredential.user;
+        if (!user.emailVerified) {
+          navigate("/verify-first");
+          return;
+        }
+        console.log("Sign-in successful, user: ", user);
+        navigate("/dashboard"); // Redirect user to dashboard or another page
+      } catch (error) {
+        console.error("Error during sign-in: ", error);
+        setErrors({ ...errors, password: "Invalid email or password" });
+      }
+    }
+  };
+
+  // Handle Google sign-in
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    setGoogleError(""); // Clear previous Google error message
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user exists in Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      // If user does not exist, save them to Firestore
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          username: user.displayName || "Google User",
+          email: user.email,
+          isVerified: user.emailVerified,
+          createdAt: new Date(),
+        });
+      }
+
+      navigate("/dashboard"); // Redirect to dashboard
+    } catch (error) {
+      console.error("Error during Google sign-in: ", error);
+      setGoogleError("Failed to sign in with Google. Please try again."); // Display error message
     }
   };
 
   return (
     <ThemeProvider theme={theme}>
-      {/* Apply the theme to the component */}
       <Box sx={{ flexGrow: 1, mt: 3, mx: 2 }}>
         <AppBar
           position="sticky"
           sx={{
-            backgroundColor: "transparent", // Transparent background
-            boxShadow: "none", // Remove box shadow
+            backgroundColor: "transparent",
+            boxShadow: "none",
           }}
         >
           <Toolbar
             sx={{
               display: "flex",
-              justifyContent: "space-between", // Space between left and right
+              justifyContent: "space-between",
               padding: "0 20px",
             }}
           >
-            {/* Left side: Logo and 'Plantify' */}
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Link to="/">
                 <img
@@ -128,15 +159,10 @@ export default function Header() {
                 Plantify.
               </Typography>
             </Box>
-
-            {/* Right side: Sign In Text Button */}
             <Link to="/signup" style={{ fontWeight: "bold" }}>
               <Button
-                variant="text" // Use text variant for a text button
-                sx={{
-                  color: "#2a2a2a", // Text color
-                  textTransform: "none", // Disable uppercase text
-                }}
+                variant="text"
+                sx={{ color: "#2a2a2a", textTransform: "none" }}
               >
                 Sign Up
               </Button>
@@ -144,7 +170,6 @@ export default function Header() {
           </Toolbar>
         </AppBar>
 
-        {/* Form Section */}
         <Box
           sx={{ maxWidth: 400, margin: "0 auto", mt: 1, alignItems: "center" }}
         >
@@ -178,9 +203,8 @@ export default function Header() {
           </Stack>
           <form onSubmit={handleSubmit}>
             <Stack spacing={2}>
-              {/* Email TextField */}
               <TextField
-                label="Email or Username"
+                label="Email"
                 variant="outlined"
                 fullWidth
                 value={email}
@@ -188,51 +212,52 @@ export default function Header() {
                 error={!!errors.email}
                 helperText={errors.email}
               />
-
-              {/* Username TextField */}
               <TextField
                 label="Password"
+                type="password"
                 variant="outlined"
                 fullWidth
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                error={!!errors.username}
-                helperText={errors.username}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!errors.password}
+                helperText={errors.password}
               />
-
-              {/* Sign Up Button */}
               <Button
                 type="submit"
                 variant="contained"
                 sx={{
-                  backgroundColor: "#4db30b", // Set the color for the button
-                  borderRadius: "5px", // Rounded button
-                  color: "white", // White text color
-                  textTransform: "none", // Keep text in normal case
+                  backgroundColor: "#4db30b",
+                  borderRadius: "5px",
+                  color: "white",
+                  textTransform: "none",
                   mt: 2,
                   height: 50,
                 }}
               >
                 Sign In
               </Button>
-
-              {/* OR Divider */}
-              <Typography>
-                <Divider>or</Divider>
-              </Typography>
-
-              {/* Sign Up with Google Button */}
+              {googleError && (
+                <Typography color="error" variant="body2">
+                  {googleError}
+                </Typography>
+              )}
+              <Divider>
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography>or</Typography>
+                </Box>
+              </Divider>
               <Button
                 variant="outlined"
                 sx={{
-                  borderColor: "#4db30b", // Border color
-                  borderRadius: "5px", // Rounded button
-                  color: "#4db30b", // Text color
-                  textTransform: "none", // Keep text in normal case
+                  borderColor: "#4db30b",
+                  borderRadius: "5px",
+                  color: "#4db30b",
+                  textTransform: "none",
                   height: 50,
                   display: "flex",
                   alignItems: "center",
                 }}
+                onClick={handleGoogleSignIn}
               >
                 <img
                   src={googleLogo}
@@ -244,10 +269,10 @@ export default function Header() {
               <Button
                 variant="text"
                 sx={{
-                  color: "#4db30b", // Match the theme color
-                  textTransform: "none", // Keep text in normal case
-                  mt: 1, // Add some spacing
-                  fontSize: "0.9rem", // Slightly smaller font size
+                  color: "#4db30b",
+                  textTransform: "none",
+                  mt: 1,
+                  fontSize: "0.9rem",
                 }}
                 component={Link}
                 to="/forgot-password"

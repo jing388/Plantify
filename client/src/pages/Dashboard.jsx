@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import Firebase auth
 import Header from "../components/Header";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -50,11 +51,27 @@ export default function Dashboard() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isFirstAlert, setIsFirstAlert] = useState(true);
   const [isAutoWatering, setIsAutoWatering] = useState(false);
+  const [user, setUser] = useState(null); // State to store user info
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
     setIsFirstAlert(false); // After the first alert, subsequent ones will auto-hide
   };
+
+  // Monitor authentication state
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+        window.location.href = "/signin"; // Navigate to signin page if user is null
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup on unmount
+  }, []);
 
   // Fetch the latest readings from the server
   const fetchLatestReading = async () => {
@@ -87,7 +104,7 @@ export default function Dashboard() {
   // Set up the interval to fetch the latest reading every 10 seconds (10000ms)
   useEffect(() => {
     fetchLatestReading(); // Initial fetch
-    const intervalId = setInterval(fetchLatestReading, 10); // Fetch every 10 seconds
+    const intervalId = setInterval(fetchLatestReading, 10000); // Fetch every 10 seconds
 
     // Cleanup the interval when the component unmounts
     return () => clearInterval(intervalId);

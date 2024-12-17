@@ -124,6 +124,7 @@ export default function Header() {
     } catch (error) {
       console.error("Google Sign-In Error:", error.message);
       setErrorMessage("Email already in use. Please try another account.");
+      window.scrollTo(0, 0); // Scroll to top to make the alert visible
     }
   };
 
@@ -156,6 +157,7 @@ export default function Header() {
     } catch (error) {
       console.error("Manual Sign-Up Error:", error.message);
       setErrorMessage("Account creation failed. Email may already be in use.");
+      window.scrollTo(0, 0); // Scroll to top to make the alert visible
     }
   };
 
@@ -177,7 +179,11 @@ export default function Header() {
               </Link>
               <Typography
                 variant="h6"
-                sx={{ color: "#2a2a2a", fontWeight: "bold" }}
+                sx={{
+                  color: "#2a2a2a",
+                  fontWeight: "bold",
+                  letterSpacing: "-0.06em",
+                }}
               >
                 Plantify.
               </Typography>
@@ -190,7 +196,7 @@ export default function Header() {
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ maxWidth: 400, margin: "0 auto", mt: 2 }}>
+        <Box sx={{ maxWidth: 400, margin: "0 auto", mt: 1, mb: 10 }}>
           <Stack spacing={2}>
             {errorMessage && (
               <Alert
@@ -200,14 +206,30 @@ export default function Header() {
                 {errorMessage}
               </Alert>
             )}
-            <Box sx={{ textAlign: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <img
                 src={plant}
                 alt="plant"
-                style={{ height: 30, marginBottom: 10 }}
+                style={{ height: 30, marginRight: 10 }}
               />
-              <Typography variant="h4" sx={{ fontWeight: "medium" }}>
-                Create Account
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: "medium",
+                  mb: 3,
+                  alignItems: "center",
+                  letterSpacing: "-0.06em",
+                }}
+              >
+                Create an Account
               </Typography>
             </Box>
             <form onSubmit={handleManualSignUp}>
@@ -249,21 +271,41 @@ export default function Header() {
                 <Button
                   type="submit"
                   variant="contained"
-                  sx={{ backgroundColor: "#4db30b" }}
+                  sx={{
+                    backgroundColor: "#4db30b",
+                    borderRadius: "5px",
+                    color: "white",
+                    textTransform: "none",
+                    mt: 2,
+                    height: 50,
+                  }}
                 >
                   Sign Up
                 </Button>
               </Stack>
             </form>
-            <Divider>or</Divider>
+            <Divider>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography>or</Typography>
+              </Box>
+            </Divider>
             <Button
-              onClick={handleGoogleSignUp}
               variant="outlined"
-              sx={{ color: "#4db30b" }}
+              sx={{
+                borderColor: "#4db30b",
+                borderRadius: "5px",
+                color: "#4db30b",
+                textTransform: "none",
+                height: 50,
+                display: "flex",
+                alignItems: "center",
+                marginBottom: 4,
+              }}
+              onClick={handleGoogleSignUp}
             >
               <img
                 src={googleLogo}
-                alt="Google"
+                alt="Google Logo"
                 style={{ height: 20, marginRight: 10 }}
               />
               Sign Up with Google
