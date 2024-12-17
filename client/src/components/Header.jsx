@@ -1,6 +1,6 @@
 import * as React from "react";
 import { AppBar, Box, Toolbar, Typography, IconButton } from "@mui/material";
-import AccountCircle from "@mui/icons-material/AccountCircle";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import logo from "../assets/plantify-logo.png"; // Import your logo
 import SettingsModal from "./SettingsModal"; // Import your modal component
 
@@ -53,17 +53,32 @@ export default function Header() {
             </Typography>
           </Box>
 
-          {/* Right side: Profile Icon */}
-          {auth && (
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              onClick={handleOpenSettingsModal} // Open modal on click
-              color="inherit"
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {/* Username Text Holder */}
+            <Typography
+              variant="body1"
+              component="div"
+              sx={{
+                fontFamily: "Inter, sans-serif",
+                color: "#2a2a2a",
+                marginRight: 2,
+              }}
             >
-              <AccountCircle sx={{ color: "#2a2a2a" }} />
-            </IconButton>
-          )}
+              Username
+            </Typography>
+
+            {/* Right side: Profile Icon */}
+            {auth && (
+              <IconButton
+                size="large"
+                aria-label="account of current user"
+                onClick={handleOpenSettingsModal} // Open modal on click
+                color="inherit"
+              >
+                <ExitToAppIcon sx={{ color: "#2a2a2a" }} />
+              </IconButton>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
 
