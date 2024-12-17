@@ -56,6 +56,7 @@ export default function Header() {
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
+  const [googleError, setGoogleError] = React.useState("");
 
   const [errors, setErrors] = React.useState({
     email: "",
@@ -107,6 +108,13 @@ export default function Header() {
   // Google Sign-Up Handler
   const handleGoogleSignUp = async () => {
     const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    setGoogleError(""); // Clear previous Google error message
+
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
@@ -123,14 +131,21 @@ export default function Header() {
       navigate("/dashboard"); // Redirect to dashboard
     } catch (error) {
       console.error("Google Sign-In Error:", error.message);
-      setErrorMessage("Email already in use. Please try another account.");
-      window.scrollTo(0, 0); // Scroll to top to make the alert visible
+      // Set specific error messages based on error codes
+      if (error.code === "auth/email-already-in-use") {
+        setGoogleError("Email already in use. Please try another account.");
+      } else {
+        setGoogleError(
+          "An error occurred during Google sign-in. Please try again."
+        );
+      }
     }
   };
 
   // Manual Sign-Up Handler
   const handleManualSignUp = async (e) => {
     e.preventDefault();
+    setErrorMessage(""); // Clear previous error message
     if (!validate()) return;
 
     try {
@@ -156,8 +171,28 @@ export default function Header() {
       navigate("/verify-email"); // Redirect to verification page
     } catch (error) {
       console.error("Manual Sign-Up Error:", error.message);
-      setErrorMessage("Account creation failed. Email may already be in use.");
-      window.scrollTo(0, 0); // Scroll to top to make the alert visible
+
+      // Set specific error messages based on error codes
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          setErrorMessage(
+            "The email address is already in use by another account."
+          );
+          break;
+        case "auth/invalid-email":
+          setErrorMessage("The email address is not valid.");
+          break;
+        case "auth/weak-password":
+          setErrorMessage(
+            "The password is too weak. It should be at least 6 characters."
+          );
+          break;
+        default:
+          setErrorMessage(
+            "An error occurred during sign-up. Please try again."
+          );
+          break;
+      }
     }
   };
 
@@ -195,7 +230,6 @@ export default function Header() {
             </Link>
           </Toolbar>
         </AppBar>
-
         <Box sx={{ maxWidth: 400, margin: "0 auto", mt: 1, mb: 10 }}>
           <Stack spacing={2}>
             {errorMessage && (
