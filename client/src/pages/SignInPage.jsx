@@ -180,7 +180,7 @@ export default function Header() {
             <Stack spacing={2}>
               {/* Email TextField */}
               <TextField
-                label="Email"
+                label="Email or Username"
                 variant="outlined"
                 fullWidth
                 value={email}
@@ -191,7 +191,7 @@ export default function Header() {
 
               {/* Username TextField */}
               <TextField
-                label="Username"
+                label="Password"
                 variant="outlined"
                 fullWidth
                 value={username}
